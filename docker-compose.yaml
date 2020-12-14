@@ -1,0 +1,53 @@
+version: "3"
+
+services:
+  mongo:
+    image: "mongo:latest"
+    restart: always
+    volumes:
+      - "./data/db:/data/db"
+    ports:
+      - ${MONGO_PORT}:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_DATABASE}
+
+  parse:
+    image: "parseplatform/parse-server:latest"
+    restart: always
+    environment:
+      PARSE_SERVER_APPLICATION_ID: ${PARSE_SERVER_APPLICATION_ID}
+      PARSE_SERVER_MASTER_KEY: ${PARSE_SERVER_MASTER_KEY}
+      PARSE_SERVER_DATABASE_URI: mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@mongo:${MONGO_PORT}/${MONGO_DATABASE}?authSource=admin
+      PARSE_SERVER_MOUNT_GRAPHQL: ${PARSE_SERVER_MOUNT_GRAPHQL}
+      PARSE_SERVER_MOUNT_PLAYGROUND: ${PARSE_SERVER_MOUNT_PLAYGROUND}
+    ports:
+      - ${PARSE_SERVER_PORT}:1337
+    links:
+      - mongo
+
+  parse-dashboard:
+    image: "parseplatform/parse-dashboard"
+    restart: always
+    environment:
+      PARSE_DASHBOARD_APP_ID: ${PARSE_SERVER_APPLICATION_ID}
+      PARSE_DASHBOARD_MASTER_KEY: ${PARSE_SERVER_MASTER_KEY}
+      PARSE_DASHBOARD_USER_ID: ${PARSE_DASHBOARD_USER_ID}
+      PARSE_DASHBOARD_USER_PASSWORD: ${PARSE_DASHBOARD_USER_PASSWORD}
+      PARSE_DASHBOARD_ALLOW_INSECURE_HTTP: ${PARSE_DASHBOARD_ALLOW_INSECURE_HTTP}
+      PARSE_DASHBOARD_SERVER_URL: http://localhost:${PARSE_SERVER_PORT}/parse
+    ports:
+      - ${PARSE_DASHBOARD_PORT}:4040
+    links:
+      - parse
+
+  frontend:
+    build: ./frontend
+    volumes:
+      - ./frontend/react-app:/app
+      - /app/node_modules
+    ports:
+      - ${FRONTEND_PORT}:3000
+    depends_on:
+      - parse
