@@ -51,7 +51,6 @@ After the docker compose was completed successfully, you should be able to acces
 
 - [http://localhost:3000/]() - react application
 - [http://localhost:4040/]() - parse dashboard
-- [http://localhost:1337/playground]() - playground
 
 ## Note
 
